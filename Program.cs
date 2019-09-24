@@ -10,7 +10,7 @@ namespace TODO
         {
             bool isRunning = true;
 
-            Task[] taskList = new Task[100];
+            int taskIdCounter = 1; //ger en unik ID till varje task
 
             while (isRunning)
             {
@@ -34,11 +34,36 @@ namespace TODO
                         Console.Write("Due date: ");
                         DateTime dueDate = DateTime.Parse(Console.ReadLine());
 
-                        taskList[GetIndexPosition()] = new Task(title, dueDate);
+                        taskList[GetIndexPosition()] = new Task(taskIdCounter++, title, dueDate);
 
                         break;
 
                     case ConsoleKey.D2: //list to do
+
+                        Console.WriteLine("ID  Title                  Due date                 Completed");
+                        Console.WriteLine("___________________________________________________________________________");
+
+                        foreach (var task in taskList)
+                        {
+                            if (task == null) continue;
+
+                            Console.WriteLine($"{task.Id} {task.Title}{task.DueDate.ToString().PadLeft(25, ' ')}");
+                        }
+
+                        Console.ReadKey(true);
+
+                        //Console.WriteLine("[M]ark as completed");
+
+                        //keyPressed = Console.ReadKey(true);
+
+                        //switch (keyPressed.Key)
+                        //{
+                        //    case ConsoleKey.M:
+
+
+
+                        //        break;
+                        //}
 
                         break;
 
