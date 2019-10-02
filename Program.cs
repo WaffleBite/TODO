@@ -1,16 +1,23 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using TODO.Domain;
 
 namespace TODO
 {
     class Program
     {
-        static Task[] taskList = new Task[100];
+        static int taskIdCounter = 1; //ger en unik ID till varje task
+
+        // 3 delar: adress till instans ; databansnamn ; authentisering
+        static string connectionString = "Data Source=.; Initial Catalog=TODO; Integrated Security=true"; 
+        //funkar med att skriva .; eller (local); eller localhost; eller Data Source=127.0.0.1;
+        //kan skriva Server istället för Data Source, och Database istället för Initial Catalog
+
         static void Main(string[] args)
         {
-            bool isRunning = true;
+            Console.ForegroundColor = ConsoleColor.Cyan; //texten blir blå
 
-            int taskIdCounter = 1; //ger en unik ID till varje task
+            bool isRunning = true;
 
             while (isRunning)
             {
@@ -34,7 +41,7 @@ namespace TODO
                         Console.Write("Due date: ");
                         DateTime dueDate = DateTime.Parse(Console.ReadLine());
 
-                        taskList[GetIndexPosition()] = new Task(taskIdCounter++, title, dueDate);
+                        CreateTask(title, dueDate);
 
                         break;
 
@@ -43,7 +50,9 @@ namespace TODO
                         Console.WriteLine("ID  Title                  Due date                 Completed");
                         Console.WriteLine("___________________________________________________________________________");
 
-                        foreach (var task in taskList)
+                        var tasks = FetchAllTasks();
+
+                        foreach (var task in tasks)
                         {
                             if (task == null) continue;
 
@@ -53,8 +62,6 @@ namespace TODO
                         Console.ReadKey(true);
 
                         //Console.WriteLine("[M]ark as completed");
-
-                        //keyPressed = Console.ReadKey(true);
 
                         //switch (keyPressed.Key)
                         //{
@@ -74,16 +81,63 @@ namespace TODO
                 }
             }
         }
+
+        private static Task[] FetchAllTasks()
+        {
+            SqlConnection connection = new SqlConnection(connectionString);
+
+            string sql = @"SELECT Id
+                            , Title
+                            , DueDate
+                            , Completed
+                            FROM Task";
+
+            SqlCommand command = new SqlCommand(sql, connection);
+
+            connection.Open();
+            //Console.WriteLine("Successfully connected to database manager instance");
+
+            //skicka SQL-kommando till servern
+            SqlDataReader dataReader = command.ExecuteReader();
+
+            while (dataReader.Read())
+            {
+                string id = dataReader["Id"].ToString();
+                string title = dataReader["Title"].ToString();
+                string dueDate = dataReader["DueDate"].ToString();
+                string completed = dataReader["Completed"].ToString();
+
+                Console.Write(id.PadRight(5, ' '));
+                Console.Write(title.PadRight(20, ' '));
+                Console.Write(dueDate.PadRight(20, ' '));
+                Console.WriteLine(completed);
+            }
+
+            connection.Close();
+
+            return new Task[100];
+        }
+
+        private static void CreateTask(string title, DateTime dueDate)
+        {
+            Task[] tasks = FetchAllTasks();
+
+            tasks[GetIndexPosition()] = new Task(taskIdCounter++, title, dueDate);
+        }
+
         static int GetIndexPosition()
         {
+            Task[] tasks = FetchAllTasks();
+
             int result = -1;
-            for (int i = 0; i < taskList.Length; i++)
+
+            for (int i = 0; i < tasks.Length; i++)
             {
-                if (taskList[i] != null)
+                if (tasks[i] != null)
                 {
                     continue;
                 }
-                if (taskList[i] == null)
+                if (tasks[i] == null)
                 {
                     result = i;
                     break;
